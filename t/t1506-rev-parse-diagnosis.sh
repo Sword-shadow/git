@@ -8,11 +8,16 @@ exec </dev/null
 
 test_did_you_mean ()
 {
-	cat >expected <<-EOF &&
-	fatal: path '$2$3' $4, but not ${5:-$SQ$3$SQ}
-	hint: Did you mean '$1:$2$3'${2:+ aka $SQ$1:./$3$SQ}?
-	EOF
-	test_cmp expected error
+	if ! test_have_prereq C_LOCALE_OUTPUT
+	then
+		grep "fatal: " error
+	else
+		cat >expected <<-EOF &&
+		fatal: path '$2$3' $4, but not ${5:-$SQ$3$SQ}
+		hint: Did you mean '$1:$2$3'${2:+ aka $SQ$1:./$3$SQ}?
+		EOF
+		test_cmp expected error
+	fi
 }
 
 HASH_file=
@@ -149,7 +154,7 @@ test_expect_success 'relative path not found' '
 	(
 		cd subdir &&
 		test_must_fail git rev-parse HEAD:./nonexistent.txt 2>error &&
-		grep subdir/nonexistent.txt error
+		test_i18ngrep subdir/nonexistent.txt error
 	)
 '
 
